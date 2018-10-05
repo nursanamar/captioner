@@ -3,6 +3,9 @@ import { Spinner,Label,Form,Item,Picker,Title,List,ListItem,Body,Container,Conte
 import { CameraRoll,PermissionsAndroid,Image,Clipboard,StyleSheet,TouchableOpacity } from "react-native";
 import { cari,upload,getTag } from "./utils/utils";
 import ImagePicker from "react-native-image-crop-picker";
+import { AdMobBanner,AdMobInterstitial,PublisherBanner } from "react-native-admob";
+import { AdUnitID } from "./utils/adUnitId"; //ENABLE ON PRODUCTION MODE
+// import { AdUnitID } from "./utils/devUnitId"; //ENABLE ON DEV MODE
 
 class Main  extends Component {
 
@@ -26,6 +29,12 @@ class Main  extends Component {
         let compose = selected.quote + "\n\n -" + selected.author;
         Clipboard.setString(compose);
         alert("Copied");
+        AdMobInterstitial.setAdUnitID(AdUnitID.adOnCopy);
+        AdMobInterstitial.addEventListener('adFailedToLoad',
+            (error) => console.warn(error)
+        );
+        // AdMobInterstitial.setTestDevices([AdMobInterstitial.simulatorId]); //ENABLE ON DEV MODE
+        AdMobInterstitial.requestAd().then(() => AdMobInterstitial.showAd());
     }
 
     onError = () => {
@@ -100,6 +109,7 @@ class Main  extends Component {
         let tags = this.state.tags;
         let tagLIst = [];
         let list = [];
+        let isAd = 0;
         data.forEach((data,key) => {
             list.push(
                 <CardItem bordered button onPress={() => { this.copyQuote(key)}} key={key}>
@@ -111,6 +121,19 @@ class Main  extends Component {
                    
                 </CardItem>
             )
+            if(((Math.floor((Math.random() * 10) + 10) % 2) === 0) && (isAd === 0)){
+                list.push(
+                    <PublisherBanner
+                        key={"a"}
+                        adSize="fullBanner"
+                        adUnitID={AdUnitID.bannerList}
+                        // testDevices={[PublisherBanner.simulatorId]} //ENABLE ON DEV MODE
+                        onAdFailedToLoad={error => console.error(error)}
+                        onAppEvent={event => console.log(event.name, event.info)}
+                    />
+                )
+                isAd++;
+            }
         })
         tags.forEach((val,key) => {
             tagLIst.push(
@@ -156,27 +179,35 @@ class Main  extends Component {
                     </CardItem>
                 </Card>
                     {
+                        (this.state.tags.length > 0) && <Form key={0}>
+                            <Item picker>
+                                <Label>Yang kami temukan di foto</Label>
+                                <Picker
+                                    mode="dropdown"
+                                    selectedValue={this.state.selectedTag}
+                                    onValueChange={this.selectTag}
+                                >
+                                    {tagLIst}
+                                </Picker>
+                            </Item>
+                        </Form> 
+                    }
+                    {
                         (this.state.quotes.length > 0) ? 
-                            [<Form key={0}>
-                                <Item picker>
-                                    <Label>Yang kami temukan di foto</Label>
-                                    <Picker
-                                        mode="dropdown"
-                                        selectedValue={this.state.selectedTag}
-                                        onValueChange={this.selectTag}
-                                    >
-                                        {tagLIst}
-                                    </Picker>
-                                </Item>
-                            </Form>,
                                 <Card key={1}>
 
 
                                     {list}
-                                </Card>]
+                                </Card>
                                 :
                                 null
                     }
+                    <AdMobBanner
+                        adSize="fullBanner"
+                        adUnitID={AdUnitID.bannerBottom}
+                        // testDevices={[AdMobBanner.simulatorId]} //ENABLE ON DEV MODE
+                        onAdFailedToLoad={error => console.error(error)}
+                    />
                 </Content>
             </Container>
         );
