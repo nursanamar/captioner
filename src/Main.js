@@ -152,7 +152,7 @@ class Main  extends Component {
                     <CardItem >
                         {
                             this.state.image ?
-                                <TouchableOpacity onPress={this.pickImage}>
+                                <TouchableOpacity onPress={this.pickImage} style={styles.imageStyle}>
 
                                     <Image style={{ width: 300, height: 300, resizeMode: 'contain' }} source={{ uri: this.state.image.uri }} />
                                 </TouchableOpacity>
@@ -224,6 +224,11 @@ const styles = StyleSheet.create({
     iconUpload: {
         fontSize: 40,
         color: '#8642f4'
+    },
+    imageStyle: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center'
     }
 });
 export default Main;
