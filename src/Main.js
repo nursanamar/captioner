@@ -26,6 +26,27 @@ class Main  extends Component {
         ImagePicker.clean()
     }
 
+    rateAlert = () => {
+        Alert.alert(
+            'Beri kami Rate',
+            'Suka dengan aplikasi ini?,ayo beri kami ulasan',
+            [
+                { text: 'Ask me later', onPress: () => console.log('Ask me later pressed') },
+                { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+                { text: 'OK', onPress: () => {
+                    Linking.canOpenURL("http://play.google.com/store/apps/details?id=com.captioner").then(supported => {
+                        if (!supported) {
+                            console.log('Can\'t handle url: ' + url);
+                        } else {
+                            return Linking.openURL("http://play.google.com/store/apps/details?id=com.captioner");
+                        }
+                    }).catch(err => console.error('An error occurred', err));
+                } },
+            ],
+            { cancelable: false }
+        )
+    }
+
     copyQuote = (index) => {
         let qoutelist = this.state.quotes;
         let selected = qoutelist[index];
@@ -33,6 +54,11 @@ class Main  extends Component {
         let compose = selected.quote + "\n\n -" + selected.author;
         Clipboard.setString(compose);
         alert("Copied");
+
+        if (Math.floor((Math.random() * 100)) < 20){
+            this.rateAlert();
+        }
+
         AdMobInterstitial.setAdUnitID(AdUnitID.adOnCopy);
         AdMobInterstitial.addEventListener('adFailedToLoad',
             (error) => console.warn(error)
