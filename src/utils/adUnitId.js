@@ -1,5 +1,5 @@
 export const AdUnitID = {
-    bannerBottom: "ca-app-pub-7444056248163657/6741411949",
-    bannerList: "ca-app-pub-7444056248163657/9850791010",
-    adOnCopy: "ca-app-pub-7444056248163657/5893318414"
+    bannerBottom: "ca-app-pub-3616677219858587/2192201969",
+    bannerList: "ca-app-pub-3616677219858587/4846285464",
+    adOnCopy: "ca-app-pub-3616677219858587/2028550435"
 }
