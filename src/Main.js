@@ -22,6 +22,10 @@ class Main  extends Component {
         }
     }
 
+    componentWillUnmount(){
+        ImagePicker.clean()
+    }
+
     copyQuote = (index) => {
         let qoutelist = this.state.quotes;
         let selected = qoutelist[index];
