@@ -4,8 +4,8 @@ import RNFetchBlob from "rn-fetch-blob";
 import { create } from "apisauce";
 
 
-export function cari(kata,callback = () => {},errCallback = () => {},index = 0){
-    let paramPart = kata[index].tag.split(" ");
+export function cari(kata,callback = () => {},errCallback = () => {}){
+    let paramPart = kata.split(" ");
     let param = paramPart.join("+");
     fetch("https://jagokata.com/kutipan/kata-" + param + ".html").then((res) => {
         return res.text();
@@ -18,13 +18,7 @@ export function cari(kata,callback = () => {},errCallback = () => {},index = 0){
                 quote: $('.fbquote', li).text()
             })
         })
-        console.log(result.length,"index "+index,"kata "+param);
-        if(index < (kata.length) && result.length <= 0){
-            let newIndex = index + 1;
-            cari(kata,callback,errCallback,newIndex);
-        }else{
-            callback(result);
-        }
+        callback(result);
     }).catch((err) => {
         console.log(err);
         errCallback()

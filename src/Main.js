@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { Spinner,Body,Container,Content,Header,Card,Textarea,Button,Grid,Text,Row,Col, CardItem,Icon,Left,Right } from "native-base";
-import { CameraRoll,PermissionsAndroid,Image,Clipboard } from "react-native";
+import { Spinner,Label,Form,Item,Picker,Title,List,ListItem,Body,Container,Content,Header,Card,Textarea,Button,Grid,Text,Row,Col, CardItem,Icon,Left,Right } from "native-base";
+import { CameraRoll,PermissionsAndroid,Image,Clipboard,StyleSheet,TouchableOpacity } from "react-native";
 import { cari,upload,getTag } from "./utils/utils";
 import ImagePicker from "react-native-image-crop-picker";
 
@@ -12,7 +12,9 @@ class Main  extends Component {
             quotes : [],
             isLoading : false,
             image : null,
-            log : ""
+            log : "",
+            tags : [],
+            selectedTag : null
 
         }
     }
@@ -32,6 +34,22 @@ class Main  extends Component {
         })
         alert("Maaf sedang terjadi masalah")
     }
+
+    selectTag = (val) => {
+        this.setState({
+            isLoading: true,
+            log: "Mencari Quote",
+            quotes: [],
+            selectedTag: val
+        })
+        let word = this.state.tags[val].tag;
+        cari(word, (data) => {
+            this.setState({
+                quotes: data,
+                isLoading: false
+            })
+        })
+    }
     
    buatQuote = async () => {
     if(this.state.image === null){
@@ -46,10 +64,12 @@ class Main  extends Component {
             log: "Menganalisa Gambar"
         })
         getTag(uploaded.uploaded[0].id,(tag) => {
-            let word = tag.results[0].tags;
+            let word = tag.results[0].tags[0].tag;
             console.log(word,"main");
             this.setState({
-                log: "Mencari Quote"
+                log: "Mencari Quote",
+                tags : tag.results[0].tags,
+                selectedTag: 0
             })
             cari(word, (data) => {
                 this.setState({
@@ -77,10 +97,12 @@ class Main  extends Component {
 
     render(){
         let data = this.state.quotes;
+        let tags = this.state.tags;
+        let tagLIst = [];
         let list = [];
         data.forEach((data,key) => {
             list.push(
-                <CardItem button onPress={() => { this.copyQuote(key)}} key={key}>
+                <CardItem bordered button onPress={() => { this.copyQuote(key)}} key={key}>
                     
                         <Body >
                             <Text>{"\"" + data.quote + "\"\n\n"}</Text>
@@ -90,53 +112,87 @@ class Main  extends Component {
                 </CardItem>
             )
         })
+        tags.forEach((val,key) => {
+            tagLIst.push(
+                <Picker.Item label={val.tag} value={key} key={key} />
+            )
+        })
         return (
             <Container>
+                <Header>
+                    <Body>
+                        <Title>Generate Your Caption</Title>
+                    </Body>
+                </Header>
                 <Content>
-                    <Card>
-                        <CardItem>
-                            <Image style={{ width: 300, height: 300, resizeMode: 'contain' }} source={this.state.image} />
-                        </CardItem>
-                        <CardItem>
+                <Card>
+                    <CardItem >
+                        {
+                            this.state.image ?
+                                <TouchableOpacity onPress={this.pickImage}>
+
+                                    <Image style={{ width: 300, height: 300, resizeMode: 'contain' }} source={{ uri: this.state.image.uri }} />
+                                </TouchableOpacity>
+                                :
+                                <Body style={styles.wrapUpload}>
+                                    <Icon onPress={this.pickImage} name="camera" style={styles.iconUpload} />
+                                    <Text>Upload Your Image Here!</Text>
+                                </Body>
+                        }
+                    </CardItem>
+                    <CardItem>
+                        <Body>
                             {
                                 this.state.isLoading ?
-                                [
-                                    <Spinner key={0} />,
-                                    <Text key={1}>{this.state.log}</Text>
-                                ]
-                                :
-                                    <Grid>
-                                        <Col>
-                                            <Button
-                                                onPress={this.pickImage}
-                                            >
-                                                <Text>Pilih Gambar</Text>
-                                            </Button>
-                                        </Col>
-                                        <Col>
-                                            <Button
-                                                onPress={this.buatQuote}
-                                            >
-                                                <Text>Buat Caption</Text>
-                                            </Button>
-                                        </Col>
-                                    </Grid>
+                                    [<Spinner key={0} />,
+                                    <Text key={1}>{this.state.log}</Text>]
+                                    :
+                                    <Button onPress={this.buatQuote} full style={{ backgroundColor: '#8642f4' }}>
+                                        <Icon name='loop' type="MaterialIcons" />
+                                        <Text>Create Caption</Text>
+                                    </Button>
                             }
-                        </CardItem>
-                    </Card>
-                    
-                        {
-                            this.state.quotes ? 
-                            <Card>
-                                {list}
-                            </Card>
-                            : null
-                        }
-                    
+                        </Body>
+                    </CardItem>
+                </Card>
+                    {
+                        (this.state.quotes.length > 0) ? 
+                            [<Form key={0}>
+                                <Item picker>
+                                    <Label>Yang kami temukan di foto</Label>
+                                    <Picker
+                                        mode="dropdown"
+                                        selectedValue={this.state.selectedTag}
+                                        onValueChange={this.selectTag}
+                                    >
+                                        {tagLIst}
+                                    </Picker>
+                                </Item>
+                            </Form>,
+                                <Card key={1}>
+
+
+                                    {list}
+                                </Card>]
+                                :
+                                null
+                    }
                 </Content>
             </Container>
-        )
+        );
     }
 }
-
+const styles = StyleSheet.create({
+    wrapUpload: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 200,
+        backgroundColor: '#f4f4f4'
+    },
+    iconUpload: {
+        fontSize: 40,
+        color: '#8642f4'
+    }
+});
 export default Main;

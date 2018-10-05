@@ -14,6 +14,7 @@
     "native-base": "^2.8.0",
     "react": "16.5.0",
     "react-native": "0.57.1",
+    "react-native-admob": "^2.0.0-beta.5",
     "react-native-cheerio": "^1.0.0-rc.4",
     "react-native-fileupload": "^1.2.0",
     "react-native-image-crop-picker": "^0.21.2",
