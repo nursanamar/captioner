@@ -1,28 +1,28 @@
 import React, { Component } from 'react';
-import { Spinner,Label,Form,Item,Picker,Title,List,ListItem,Body,Container,Content,Header,Card,Textarea,Button,Grid,Text,Row,Col, CardItem,Icon,Left,Right } from "native-base";
-import { CameraRoll,PermissionsAndroid,Image,Clipboard,StyleSheet,TouchableOpacity } from "react-native";
-import { cari,upload,getTag } from "./utils/utils";
+import { Spinner, Label, Form, Item, Picker, Title, List, ListItem, Body, Container, Content, Header, Card, Textarea, Button, Grid, Text, Row, Col, CardItem, Icon, Left, Right } from "native-base";
+import { CameraRoll, PermissionsAndroid, Image, Clipboard, StyleSheet, TouchableOpacity } from "react-native";
+import { cari, upload, getTag } from "./utils/utils";
 import ImagePicker from "react-native-image-crop-picker";
-import { AdMobBanner,AdMobInterstitial,PublisherBanner } from "react-native-admob";
-import { AdUnitID } from "./utils/adUnitId"; //ENABLE ON PRODUCTION MODE
+// import { AdMobBanner,AdMobInterstitial,PublisherBanner } from "react-native-admob";
+// import { AdUnitID } from "./utils/adUnitId"; //ENABLE ON PRODUCTION MODE
 // import { AdUnitID } from "./utils/devUnitId"; //ENABLE ON DEV MODE
 
-class Main  extends Component {
+class Main extends Component {
 
-    constructor(props){
+    constructor(props) {
         super(props);
         this.state = {
-            quotes : [],
-            isLoading : false,
-            image : null,
-            log : "",
-            tags : [],
-            selectedTag : null
+            quotes: [],
+            isLoading: false,
+            image: null,
+            log: "",
+            tags: [],
+            selectedTag: null
 
         }
     }
 
-    componentWillUnmount(){
+    componentWillUnmount() {
         ImagePicker.clean()
     }
 
@@ -33,15 +33,17 @@ class Main  extends Component {
             [
                 { text: 'Ask me later', onPress: () => console.log('Ask me later pressed') },
                 { text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
-                { text: 'OK', onPress: () => {
-                    Linking.canOpenURL("http://play.google.com/store/apps/details?id=com.captioner").then(supported => {
-                        if (!supported) {
-                            console.log('Can\'t handle url: ' + url);
-                        } else {
-                            return Linking.openURL("http://play.google.com/store/apps/details?id=com.captioner");
-                        }
-                    }).catch(err => console.error('An error occurred', err));
-                } },
+                {
+                    text: 'OK', onPress: () => {
+                        Linking.canOpenURL("http://play.google.com/store/apps/details?id=com.captioner").then(supported => {
+                            if (!supported) {
+                                console.log('Can\'t handle url: ' + url);
+                            } else {
+                                return Linking.openURL("http://play.google.com/store/apps/details?id=com.captioner");
+                            }
+                        }).catch(err => console.error('An error occurred', err));
+                    }
+                },
             ],
             { cancelable: false }
         )
@@ -55,21 +57,21 @@ class Main  extends Component {
         Clipboard.setString(compose);
         alert("Copied");
 
-        if (Math.floor((Math.random() * 100)) < 20){
+        if (Math.floor((Math.random() * 100)) < 20) {
             this.rateAlert();
         }
 
-        AdMobInterstitial.setAdUnitID(AdUnitID.adOnCopy);
-        AdMobInterstitial.addEventListener('adFailedToLoad',
-            (error) => console.warn(error)
-        );
-        // AdMobInterstitial.setTestDevices([AdMobInterstitial.simulatorId]); //ENABLE ON DEV MODE
-        AdMobInterstitial.requestAd().then(() => AdMobInterstitial.showAd());
+        // AdMobInterstitial.setAdUnitID(AdUnitID.adOnCopy);
+        // AdMobInterstitial.addEventListener('adFailedToLoad',
+        //     (error) => console.warn(error)
+        // );
+        // // AdMobInterstitial.setTestDevices([AdMobInterstitial.simulatorId]); //ENABLE ON DEV MODE
+        // AdMobInterstitial.requestAd().then(() => AdMobInterstitial.showAd());
     }
 
     onError = () => {
         this.setState({
-            isLoading : false
+            isLoading: false
         })
         alert("Maaf sedang terjadi masalah")
     }
@@ -81,93 +83,100 @@ class Main  extends Component {
             quotes: [],
             selectedTag: val
         })
-        let word = this.state.tags[val].tag;
-        cari(word, (data) => {
+        let word = this.state.tags[val];
+        cari(word).then((data) => {
             this.setState({
                 quotes: data,
                 isLoading: false
             })
         })
     }
-    
-   buatQuote = async () => {
-    if(this.state.image === null){
-        return
-    }
-    this.setState({
-        isLoading : true,
-        log: "Mengupload gambar"
-    })
-    upload(this.state.image,(uploaded) => {
+
+    buatQuote = async () => {
+        if (this.state.image === null) {
+            return
+        }
         this.setState({
-            log: "Menganalisa Gambar"
+            isLoading: true,
+            log: "Mengupload gambar"
         })
-        getTag(uploaded.uploaded[0].id,(tag) => {
-            let word = tag.results[0].tags[0].tag;
-            console.log(word,"main");
+
+        upload(this.state.image).then(async (upload) => {
+            this.setState({
+                log: "Menganalisa Gambar"
+            })
+
+            let upload_id = upload.result.upload_id;
+            let tags = await getTag(upload_id);
+
+            return tags
+        }).then(async tags => {
+            let words = [];
+
+            tags.result.tags.forEach(tag => {
+                words.push(tag.tag.id)
+            });
+
+            let quotes = await cari(words[0]);
+
             this.setState({
                 log: "Mencari Quote",
-                tags : tag.results[0].tags,
-                selectedTag: 0
+                tags: words,
+                selectedTag: 0,
+                quotes: quotes,
+                isLoading: false
             })
-            cari(word, (data) => {
-                this.setState({
-                    quotes: data,
-                    isLoading: false
-                })
-                console.log(this.state)
-            },this.onError) 
-        },this.onError)
-    },this.onError)
-    
-   }
 
-   pickImage = () => {
-       ImagePicker.openPicker({
-           compressImageQuality : 0.3
-       }).then(image => {
-           console.log(image);
-           this.setState({
-               image : {uri : image.path, width : image.width, height : image.height, mime : image.mime}
-           })
-       });
-   }
+        }).catch(this.onError);
+
+    }
+
+    pickImage = () => {
+        ImagePicker.openPicker({
+            compressImageQuality: 0.3
+        }).then(image => {
+            console.log(image);
+            this.setState({
+                image: { uri: image.path, width: image.width, height: image.height, mime: image.mime }
+            })
+        });
+    }
 
 
-    render(){
+    render() {
         let data = this.state.quotes;
         let tags = this.state.tags;
         let tagLIst = [];
         let list = [];
         let isAd = 0;
-        data.forEach((data,key) => {
+        data.forEach((data, key) => {
             list.push(
-                <CardItem bordered button onPress={() => { this.copyQuote(key)}} key={key}>
-                    
-                        <Body >
-                            <Text>{"\"" + data.quote + "\"\n\n"}</Text>
-                            <Text style={{ fontStyle: "italic" }} >{"-" + data.author}</Text>
-                        </Body>
-                   
+                <CardItem bordered button onPress={() => { this.copyQuote(key) }} key={key}>
+
+                    <Body >
+                        <Text>{"\"" + data.quote + "\"\n\n"}</Text>
+                        <Text style={{ fontStyle: "italic" }} >{"-" + data.author}</Text>
+                    </Body>
+
                 </CardItem>
             )
-            if(((Math.floor((Math.random() * 10) + 10) % 2) === 0) && (isAd === 0)){
-                list.push(
-                    <PublisherBanner
-                        key={"a"}
-                        adSize="fullBanner"
-                        adUnitID={AdUnitID.bannerList}
-                        // testDevices={[PublisherBanner.simulatorId]} //ENABLE ON DEV MODE
-                        onAdFailedToLoad={error => console.error(error)}
-                        onAppEvent={event => console.log(event.name, event.info)}
-                    />
-                )
-                isAd++;
-            }
+            // if(((Math.floor((Math.random() * 10) + 10) % 2) === 0) && (isAd === 0)){
+            //     list.push(
+            //         <PublisherBanner
+            //             key={"a"}
+            //             adSize="fullBanner"
+            //             adUnitID={AdUnitID.bannerList}
+            //             // testDevices={[PublisherBanner.simulatorId]} //ENABLE ON DEV MODE
+            //             onAdFailedToLoad={error => console.error(error)}
+            //             onAppEvent={event => console.log(event.name, event.info)}
+            //         />
+            //     )
+            //     isAd++;
+            // }
         })
-        tags.forEach((val,key) => {
+        tags.forEach((val, key) => {
             tagLIst.push(
-                <Picker.Item label={val.tag} value={key} key={key} />
+                <Picker.Item label={val} value={key} key={key} />
             )
         })
         return (
@@ -178,36 +187,36 @@ class Main  extends Component {
                     </Body>
                 </Header>
                 <Content>
-                <Card>
-                    <CardItem >
-                        {
-                            this.state.image ?
-                                <TouchableOpacity onPress={this.pickImage} style={styles.imageStyle}>
-
-                                    <Image style={{ width: 300, height: 300, resizeMode: 'contain' }} source={{ uri: this.state.image.uri }} />
-                                </TouchableOpacity>
-                                :
-                                <Body style={styles.wrapUpload}>
-                                    <Icon onPress={this.pickImage} name="camera" style={styles.iconUpload} />
-                                    <Text>Upload Your Image Here!</Text>
-                                </Body>
-                        }
-                    </CardItem>
-                    <CardItem>
-                        <Body>
+                    <Card>
+                        <CardItem >
                             {
-                                this.state.isLoading ?
-                                    [<Spinner key={0} />,
-                                    <Text key={1}>{this.state.log}</Text>]
+                                this.state.image ?
+                                    <TouchableOpacity onPress={this.pickImage} style={styles.imageStyle}>
+
+                                        <Image style={{ width: 300, height: 300, resizeMode: 'contain' }} source={{ uri: this.state.image.uri }} />
+                                    </TouchableOpacity>
                                     :
-                                    <Button onPress={this.buatQuote} full style={{ backgroundColor: '#8642f4' }}>
-                                        <Icon name='loop' type="MaterialIcons" />
-                                        <Text>Create Caption</Text>
-                                    </Button>
+                                    <Body style={styles.wrapUpload}>
+                                        <Icon onPress={this.pickImage} name="camera" style={styles.iconUpload} />
+                                        <Text>Upload Your Image Here!</Text>
+                                    </Body>
                             }
-                        </Body>
-                    </CardItem>
-                </Card>
+                        </CardItem>
+                        <CardItem>
+                            <Body>
+                                {
+                                    this.state.isLoading ?
+                                        [<Spinner key={0} />,
+                                        <Text key={1}>{this.state.log}</Text>]
+                                        :
+                                        <Button onPress={this.buatQuote} full style={{ backgroundColor: '#8642f4' }}>
+                                            <Icon name='loop' type="MaterialIcons" />
+                                            <Text>Create Caption</Text>
+                                        </Button>
+                                }
+                            </Body>
+                        </CardItem>
+                    </Card>
                     {
                         (this.state.tags.length > 0) && <Form key={0}>
                             <Item picker>
@@ -220,24 +229,24 @@ class Main  extends Component {
                                     {tagLIst}
                                 </Picker>
                             </Item>
-                        </Form> 
+                        </Form>
                     }
                     {
-                        (this.state.quotes.length > 0) ? 
-                                <Card key={1}>
+                        (this.state.quotes.length > 0) ?
+                            <Card key={1}>
 
 
-                                    {list}
-                                </Card>
-                                :
-                                null
+                                {list}
+                            </Card>
+                            :
+                            null
                     }
-                    <AdMobBanner
+                    {/* <AdMobBanner
                         adSize="fullBanner"
                         adUnitID={AdUnitID.bannerBottom}
                         // testDevices={[AdMobBanner.simulatorId]} //ENABLE ON DEV MODE
                         onAdFailedToLoad={error => console.error(error)}
-                    />
+                    /> */}
                 </Content>
             </Container>
         );

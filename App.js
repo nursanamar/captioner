@@ -6,14 +6,15 @@
  * @flow
  */
 
-import React, {Component} from 'react';
+import React from 'react';
 import Main from "./src/Main";
 
-export default class App extends Component {
-  render() {
+class App extends React.Component {
+  render(){
     return (
       <Main />
-    );
+    )
   }
 }
 
+export default App;
